@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<conf package="testpkg" alias="测试包">
+    <!-- enum 枚举 -->
+    <enum name="TEST_ENUM" alias="测试枚举">
+        <var name="ENUM_1" default="1" alias="枚举1"/>
+        <var name="ENUM_2" default="2" alias="枚举2"/>
+    </enum>
+    <!-- struct 结构，不会生成读取func -->
+    <struct name="TestStruct" alias="测试结构">
+        <var name="TestSubStruct" type="TestSubStruct" alias="测试子结构"/>
+    </struct>
+    <struct name="TestSubStruct" alias="测试子结构">
+        <var name="TestInt" type="int" alias="测试整型"/>
+        <!-- float会存在精度问题，百分比之类的配置应用int表示，建议使用万分之int来配置，考虑增加percen类型 -->
+        <var name="TestString" type="string" alias="测试字符串"/>
+        <var name="TestBool" type="bool" alias="测试布尔值"/>
+    </struct>
+    <!-- table 表格，会生成读取func -->
+    <table name="TestTable" alias="测试表" >
+        <var name="TestInt" type="int" alias="测试整型"/>
+        <!-- float会存在精度问题，百分比之类的配置应用int表示，建议使用万分之int来配置，考虑增加percen类型 -->
+        <var name="TestString" type="string" alias="测试字符串"/>
+        <var name="TestBool" type="bool" alias="测试布尔值"/>
+        <var name="TestEnum" type="TEST_ENUM" alias="测试枚举"/>
+        <!-- valueType支持int、string、bool、enum、struct -->
+        <var name="TestList" type="list" alias="测试列表" valueType="TEST_ENUM"/>
+        <!-- map类型的key固定为int -->
+        <var name="TestMap" type="map" alias="测试哈希表" valueType="TEST_ENUM"/>
+        <var name="TestStruct" type="TestStruct" alias="测试结构"/>
+    </table>
+</conf>

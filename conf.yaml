@@ -1,0 +1,3 @@
+conf_go_path: ./example/conf_go/
+data_path: ./example/data/
+metadata_path: ./example/metadata/

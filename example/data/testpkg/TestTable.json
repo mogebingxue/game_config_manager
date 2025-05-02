@@ -1,0 +1,23 @@
+{
+    "TestBool": true,
+    "TestEnum": 1,
+    "TestInt": 30,
+    "TestList": [
+        2,
+        1
+    ],
+    "TestMap": {
+        "key1": 1,
+        "key3": 2,
+        "key4": 1,
+        "key5": 1
+    },
+    "TestString": "Hello World!",
+    "TestStruct": {
+        "TestSubStruct": {
+            "TestBool": false,
+            "TestInt": 10,
+            "TestString": "Hello Struct!"
+        }
+    }
+}
