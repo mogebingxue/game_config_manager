@@ -197,7 +197,10 @@ type TreeNode struct {
 	Deleted bool   //标记list元素被删除
 }
 
-func (t *TableTree) Save() {
+func (t *TableTree) Save() error {
+	if err := t.CheckCanSave(); err != nil {
+		return err
+	}
 	//如果文件夹不存在创建文件夹
 	if _, err := os.Stat(baseDtaPath + t.Pack); os.IsNotExist(err) {
 		os.Mkdir(t.Pack, 0755)
@@ -209,6 +212,17 @@ func (t *TableTree) Save() {
 	}
 	defer file.Close()
 	file.Write(t.ToJson())
+	return nil
+}
+
+func (t *TableTree) CheckCanSave() error {
+	// todo check合法性
+	for _, node := range t.Nodes {
+		if err := node.CheckCanSave(utils.AllTypMap[t.Pack]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *TableTree) ToJson() []byte {
@@ -316,4 +330,44 @@ func (n *TreeNode) ToJson(typMap map[string]utils.Meta) (any, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (n *TreeNode) CheckCanSave(typMap map[string]utils.Meta) error {
+	switch n.Typ {
+	case "int", "string", "bool":
+		return nil
+	case "list":
+		return nil
+	case "map":
+		nodeList, ok := n.Val.([]*TreeNode)
+		if !ok {
+			return fmt.Errorf("%s is not a map type", n.Alias)
+		}
+		visit := make(map[string]bool)
+		for _, v := range nodeList {
+			if _, ok := visit[v.Key]; !ok {
+				return fmt.Errorf("%s has duplicate key:%s", n.Alias, v.Key)
+			}
+			if err := v.CheckCanSave(typMap); err != nil {
+				return err
+			}
+			visit[v.Key] = true
+		}
+	default:
+		meta, ok := typMap[n.Typ]
+		if !ok || meta.Typ == utils.TABLE {
+			return fmt.Errorf("%s is a table type", n.Alias)
+		}
+		if meta.Typ == utils.STRUCT {
+			for _, child := range n.Nodes {
+				err := child.CheckCanSave(typMap)
+				if err != nil {
+					return err
+				}
+			}
+		} else if meta.Typ == utils.ENUM {
+
+		}
+	}
+	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/mogebingxue/game_config_manager"
@@ -45,7 +46,17 @@ func main() {
 	// 布局设置
 	mainContainer := container.NewBorder(
 		container.NewHBox(
-			widget.NewToolbar(widget.NewToolbarAction(theme.DocumentSaveIcon(), func() { selectTable.Save() })),
+			widget.NewToolbar(widget.NewToolbarAction(theme.DocumentSaveIcon(), func() {
+				if selectTable == nil {
+					dialog.ShowInformation("保存失败", "未选择表，请选择表后再保存", w)
+					return
+				}
+				err := selectTable.Save()
+				if err != nil {
+					dialog.ShowInformation("保存失败", err.Error(), w)
+					return
+				}
+			})),
 			InitSelect(TableDisplay)),
 		nil, nil, nil,
 		TableDisplayScroll,
