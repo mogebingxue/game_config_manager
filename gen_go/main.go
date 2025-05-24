@@ -60,7 +60,7 @@ func genConf(srcFilePath, outPath string) {
 		slog.Info("Error:", "err", err)
 		os.Exit(1)
 	}
-	err, nameMap := utils.CheckConfValid(conf)
+	err, _ = utils.CheckConfValid(conf)
 	if err != nil {
 		slog.Info("Error:", "err", err)
 		os.Exit(1)
@@ -80,7 +80,6 @@ func genConf(srcFilePath, outPath string) {
 		WriteToFile(fmt.Sprintf("%s%s/%s.go", outPath, conf.Package, fileName), writeContent)
 		GoFmt(fmt.Sprintf("%s%s/%s.go", outPath, conf.Package, fileName))
 	}
-	WriteToFile(fmt.Sprintf("%s%s/%s.go", outPath, conf.Package, "register"), GenRegister(conf.Package, conf.Alias, nameMap))
 
 	slog.Info("gen config", "file:", srcFilePath)
 }
@@ -115,23 +114,15 @@ func WriteToFile(fileName, content string) {
 	}
 }
 
-func GenRegister(packageName, packageAlias string, entryMap map[string]utils.Meta) string {
-	var buffer strings.Builder
-	buffer.WriteString(GetPkgStr(packageName, packageAlias))
-	buffer.WriteString("import \"config\"\n\n")
-	buffer.WriteString(fmt.Sprintf("func init() {\n"))
-	for k, v := range entryMap {
-		if v.Typ == utils.TABLE {
-			buffer.WriteString(fmt.Sprintf("\tconfig.GetConfigManager().Register(&%s{})\n", k))
-		}
-	}
-	buffer.WriteString(fmt.Sprintf("}\n"))
-	return buffer.String()
-}
-
 func GenStruct(packageName, packageAlias string, tStruct *utils.Struct) (string, string) {
 	var buffer strings.Builder
 	buffer.WriteString(GetPkgStr(packageName, packageAlias))
+	buffer.WriteString(GenStructWithoutPackage(tStruct))
+	return tStruct.Name, buffer.String()
+}
+
+func GenStructWithoutPackage(tStruct *utils.Struct) string {
+	var buffer strings.Builder
 	buffer.WriteString(fmt.Sprintf("// %s\n", tStruct.Alias))
 	buffer.WriteString(fmt.Sprintf("type %s struct {\n", tStruct.Name))
 	for _, v := range tStruct.Vars {
@@ -154,16 +145,20 @@ func GenStruct(packageName, packageAlias string, tStruct *utils.Struct) (string,
 
 	}
 	buffer.WriteString(fmt.Sprintf("}\n"))
-	return tStruct.Name, buffer.String()
+	return buffer.String()
 }
 
 func GenTable(packageName, packageAlias string, tStruct *utils.Struct) (string, string) {
-	fileName, structContent := GenStruct(packageName, packageAlias, tStruct)
+	fileName, structContent := tStruct.Name, GenStructWithoutPackage(tStruct)
 	var buffer strings.Builder
+
+	buffer.WriteString(GetPkgStr(packageName, packageAlias))
+	//导入包
+	buffer.WriteString(fmt.Sprintf("import \"github.com/mogebingxue/game_config_manager\"\n\n"))
 	//生成结构
 	buffer.WriteString(structContent)
 	//生成变量
-	buffer.WriteString(fmt.Sprintf("\nvar %s = new(%s)\n", FirstToLower(fileName), fileName))
+	buffer.WriteString(fmt.Sprintf("\nvar %s *%s\n", FirstToLower(fileName), fileName))
 	buffer.WriteString(fmt.Sprintf("var reload%s *%s\n", fileName, fileName))
 	//生成基础接口
 	buffer.WriteString(fmt.Sprintf("\nfunc (cfg *%s) GetFileName() string {\n", fileName))
@@ -183,6 +178,13 @@ func GenTable(packageName, packageAlias string, tStruct *utils.Struct) (string, 
 	buffer.WriteString(fmt.Sprintf("}\n"))
 	//生成获取接口
 	buffer.WriteString(fmt.Sprintf("\nfunc Get%s() *%s {\n", fileName, fileName))
+	buffer.WriteString(fmt.Sprintf("\tif %s== nil {\n", FirstToLower(fileName)))
+	buffer.WriteString(fmt.Sprintf("\t\t%s = &%s{}\n", FirstToLower(fileName), fileName))
+	buffer.WriteString(fmt.Sprintf("\t\tconfig.GetConfigManager().LoadFile(%s)\n", FirstToLower(fileName)))
+	buffer.WriteString(fmt.Sprintf("\t}\n"))
+	buffer.WriteString(fmt.Sprintf("\tif config.GetConfigManager().IsDirty(%s.GetFileName()){\n", FirstToLower(fileName)))
+	buffer.WriteString(fmt.Sprintf("\t\tconfig.GetConfigManager().ReloadFile(%s)\n", FirstToLower(fileName)))
+	buffer.WriteString(fmt.Sprintf("\t}\n"))
 	buffer.WriteString(fmt.Sprintf("\treturn %s\n", FirstToLower(fileName)))
 	buffer.WriteString(fmt.Sprintf("}\n"))
 	return fileName, buffer.String()

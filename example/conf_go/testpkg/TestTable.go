@@ -3,6 +3,8 @@
 // 测试包
 package testpkg
 
+import "github.com/mogebingxue/game_config_manager"
+
 // 测试表
 type TestTable struct {
 	TestInt    int                  // 测试整型
@@ -14,7 +16,7 @@ type TestTable struct {
 	TestStruct TestStruct           // 测试结构
 }
 
-var testTable = new(TestTable)
+var testTable *TestTable
 var reloadTestTable *TestTable
 
 func (cfg *TestTable) GetFileName() string {
@@ -37,5 +39,12 @@ func (cfg *TestTable) OnReloadFinished() {
 }
 
 func GetTestTable() *TestTable {
+	if testTable == nil {
+		testTable = &TestTable{}
+		config.GetConfigManager().LoadFile(testTable)
+	}
+	if config.GetConfigManager().IsDirty(testTable.GetFileName()) {
+		config.GetConfigManager().ReloadFile(testTable)
+	}
 	return testTable
 }

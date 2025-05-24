@@ -12,8 +12,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	config.GetConfigManager().LoadAll(cfg.DataPath)
-	config.GetHotFixLuaMgr().StartService(cfg.DataPath)
+	config.GetConfigManager().StartService(cfg.DataPath)
 	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
