@@ -1,0 +1,24 @@
+syntax = "proto3";
+package conf;
+option go_package = "conf";
+
+// 测试表，包含基础数据类型和复合数据类型
+message TestTable {
+  int64 testInt = 1; // 测试整型字段
+  string testString = 2; // 测试字符串字段
+  TestEnum testEnum = 3; // 测试枚举字段
+  repeated SubStruct subStructs = 4; // 测试数组字段
+}
+
+// 测试枚举类型
+enum TestEnum {
+  TestEnumNone = 0; // 默认值
+  TestEnumOne = 1; // 枚举值1
+}
+
+message SubStruct {
+  // 测试数组中的复合字段
+  int64 subInt = 1;
+  string subString = 2;
+  TestEnum subEnum = 3;
+}
