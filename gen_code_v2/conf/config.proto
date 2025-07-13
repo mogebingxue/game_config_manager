@@ -8,6 +8,7 @@ message TestTable {
   string testString = 2; // 测试字符串字段
   TestEnum testEnum = 3; // 测试枚举字段
   repeated SubStruct subStructs = 4; // 测试数组字段
+  map<string, SubStruct> subStructsMap = 5; // 测试map字段
 }
 
 // 测试枚举类型

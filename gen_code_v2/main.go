@@ -59,12 +59,16 @@ type EnumValue struct {
 }
 
 // 字段数据
+// 字段数据
 type FieldData struct {
-	FieldName  string // 字段名
+	FieldName  string
 	FieldType  string
 	YamlTag    string
 	Comments   CommentData
 	IsRepeated bool
+	IsMap      bool
+	MapKey     string
+	MapValue   string
 }
 
 func main() {
@@ -183,8 +187,19 @@ func processMessage(msg *desc.MessageDescriptor) StructData {
 		yamlTag := field.GetJSONName()
 		isRepeated := field.IsRepeated()
 
-		// 处理重复字段类型
-		if isRepeated {
+		// 新增：检测是否是map类型
+		isMap := field.GetMessageType() != nil && field.GetMessageType().IsMapEntry()
+		var mapKey, mapValue string
+		if isMap {
+			// 提取map的key/value类型
+			keyField := field.GetMessageType().GetFields()[0]
+			valueField := field.GetMessageType().GetFields()[1]
+			mapKey = mapKeyType(keyField)
+			mapValue = mapProtoType(valueField)
+		}
+
+		// 处理重复字段类型 (map不需要重复标记)
+		if isRepeated && !isMap {
 			if strings.HasPrefix(fieldType, "*") {
 				fieldType = "[]" + strings.TrimPrefix(fieldType, "*")
 			} else {
@@ -198,6 +213,9 @@ func processMessage(msg *desc.MessageDescriptor) StructData {
 			YamlTag:    yamlTag,
 			Comments:   getComments(field.GetSourceInfo()),
 			IsRepeated: isRepeated,
+			IsMap:      isMap,
+			MapKey:     mapKey,
+			MapValue:   mapValue,
 		})
 	}
 
@@ -262,6 +280,13 @@ func getComments(info *descriptorpb.SourceCodeInfo_Location) CommentData {
 
 // 映射proto类型到Go类型
 func mapProtoType(field *desc.FieldDescriptor) string {
+	if field.GetMessageType() != nil && field.GetMessageType().IsMapEntry() {
+		keyField := field.GetMessageType().GetFields()[0]
+		valueField := field.GetMessageType().GetFields()[1]
+		keyType := mapKeyType(keyField)
+		valueType := mapProtoType(valueField)
+		return fmt.Sprintf("map[%s]%s", keyType, valueType)
+	}
 	switch field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_INT64,
 		descriptorpb.FieldDescriptorProto_TYPE_SINT64,
@@ -304,6 +329,36 @@ func mapProtoType(field *desc.FieldDescriptor) string {
 
 	default:
 		return "interface{}"
+	}
+}
+func mapKeyType(field *desc.FieldDescriptor) string {
+	switch field.GetType() {
+	case descriptorpb.FieldDescriptorProto_TYPE_INT64,
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64,
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64:
+		return "int64"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_INT32,
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32,
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32:
+		return "int32"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_UINT64,
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
+		return "uint64"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_UINT32,
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
+		return "uint32"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+		return "bool"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
+		return "string"
+
+	default:
+		return "string" // 默认使用string
 	}
 }
 

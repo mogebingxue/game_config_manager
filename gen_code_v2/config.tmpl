@@ -37,7 +37,7 @@ type {{.Name}} struct {
 	{{formatLeadingComments .Comments.LeadingComments}}
 	{{- end}}
 	{{- end}}
-	{{.FieldName}} {{.FieldType}} `yaml:"{{.YamlTag}}{{if .IsRepeated}},omitempty{{end}}"`{{if .Comments.TrailingComments}} {{formatTrailingComments .Comments.TrailingComments}}{{end}}
+	{{.FieldName}} {{.FieldType}} `yaml:"{{.YamlTag}}{{if .IsRepeated}},omitempty{{end}}{{if .IsMap}},inline{{end}}"`{{if .Comments.TrailingComments}} {{formatTrailingComments .Comments.TrailingComments}}{{end}}
 {{- end}}
 }
 {{end}}

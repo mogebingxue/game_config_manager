@@ -5,10 +5,11 @@ package conf
 
 // 测试表，包含基础数据类型和复合数据类型
 type TestTable struct {
-	TestInt    int64       `yaml:"testInt"`              // 测试整型字段
-	TestString string      `yaml:"testString"`           // 测试字符串字段
-	TestEnum   TestEnum    `yaml:"testEnum"`             // 测试枚举字段
-	SubStructs []SubStruct `yaml:"subStructs,omitempty"` // 测试数组字段
+	TestInt       int64                 `yaml:"testInt"`                        // 测试整型字段
+	TestString    string                `yaml:"testString"`                     // 测试字符串字段
+	TestEnum      TestEnum              `yaml:"testEnum"`                       // 测试枚举字段
+	SubStructs    []SubStruct           `yaml:"subStructs,omitempty"`           // 测试数组字段
+	SubStructsMap map[string]*SubStruct `yaml:"subStructsMap,omitempty,inline"` // 测试map字段
 }
 
 type SubStruct struct {
