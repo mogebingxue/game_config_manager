@@ -2,24 +2,32 @@ syntax = "proto3";
 package conf;
 option go_package = "conf";
 
-// 测试表，包含基础数据类型和复合数据类型
-message TestTable {
-  int64 testInt = 1; // 测试整型字段
-  string testString = 2; // 测试字符串字段
-  TestEnum testEnum = 3; // 测试枚举字段
-  repeated SubStruct subStructs = 4; // 测试数组字段
-  map<string, SubStruct> subStructsMap = 5; // 测试map字段
-}
-
-// 测试枚举类型
+// 测试枚举
 enum TestEnum {
-  TestEnumNone = 0; // 默认值
-  TestEnumOne = 1; // 枚举值1
+  TEST_ENUM_A = 0;
+  TEST_ENUM_B = 1;
+  TEST_ENUM_C = 2;
 }
 
-message SubStruct {
-  // 测试数组中的复合字段
-  int64 subInt = 1;
-  string subString = 2;
-  TestEnum subEnum = 3;
+// 测试子结构
+message TestSubStruct {
+  int32 testInt = 1;    // 测试整型
+  string testString = 2; // 测试字符串
+  bool testBool = 3;     // 测试布尔值
+}
+
+// 测试结构
+message TestStruct {
+  TestSubStruct testSubStruct = 1; // 测试子结构
+}
+
+// 测试表（单条记录结构）
+message TestTable {
+  int32 testInt = 1;                // 测试整型
+  string testString = 2;             // 测试字符串
+  bool testBool = 3;                 // 测试布尔值
+  TestEnum testEnum = 4;            // 测试枚举
+  repeated TestEnum testList = 5;   // 测试列表（枚举类型）
+  map<int32, TestEnum> testMap = 6; // 测试哈希表（key为int, value为枚举）
+  TestStruct testStruct = 7;         // 测试结构
 }

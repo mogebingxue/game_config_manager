@@ -3,26 +3,69 @@
 
 package conf
 
-// 测试表，包含基础数据类型和复合数据类型
+import "github.com/mogebingxue/game_config_manager"
+
+// 测试子结构
+type TestSubStruct struct {
+	TestInt    int32  `yaml:"testInt"`    // 测试整型
+	TestString string `yaml:"testString"` // 测试字符串
+	TestBool   bool   `yaml:"testBool"`   // 测试布尔值
+}
+
+// 测试结构
+type TestStruct struct {
+	TestSubStruct *TestSubStruct `yaml:"testSubStruct"` // 测试子结构
+}
+
+// 测试表（单条记录结构）
 type TestTable struct {
-	TestInt       int64                 `yaml:"testInt"`                        // 测试整型字段
-	TestString    string                `yaml:"testString"`                     // 测试字符串字段
-	TestEnum      TestEnum              `yaml:"testEnum"`                       // 测试枚举字段
-	SubStructs    []SubStruct           `yaml:"subStructs,omitempty"`           // 测试数组字段
-	SubStructsMap map[string]*SubStruct `yaml:"subStructsMap,omitempty,inline"` // 测试map字段
+	TestInt    int32              `yaml:"testInt"`                  // 测试整型
+	TestString string             `yaml:"testString"`               // 测试字符串
+	TestBool   bool               `yaml:"testBool"`                 // 测试布尔值
+	TestEnum   TestEnum           `yaml:"testEnum"`                 // 测试枚举
+	TestList   []TestEnum         `yaml:"testList,omitempty"`       // 测试列表（枚举类型）
+	TestMap    map[int32]TestEnum `yaml:"testMap,omitempty,inline"` // 测试哈希表（key为int, value为枚举）
+	TestStruct *TestStruct        `yaml:"testStruct"`               // 测试结构
 }
 
-type SubStruct struct {
-	// 测试数组中的复合字段
-	SubInt    int64    `yaml:"subInt"`
-	SubString string   `yaml:"subString"`
-	SubEnum   TestEnum `yaml:"subEnum"`
+var testTable *TestTable
+var reloadTestTable *TestTable
+
+func (cfg *TestTable) GetFileName() string {
+	return "conf/TestTable.json"
 }
 
-// 测试枚举类型
+func (cfg *TestTable) GetResult() interface{} {
+	return testTable
+}
+
+func (cfg *TestTable) GetReloadResult(alloc bool) interface{} {
+	if alloc || reloadTestTable == nil {
+		reloadTestTable = new(TestTable)
+	}
+	return reloadTestTable
+}
+
+func (cfg *TestTable) OnReloadFinished() {
+	testTable = reloadTestTable
+}
+
+func GetTestTable() *TestTable {
+	if testTable == nil {
+		testTable = &TestTable{}
+		config.GetConfigManager().LoadFile(testTable)
+	}
+	if config.GetConfigManager().IsDirty(testTable.GetFileName()) {
+		config.GetConfigManager().ReloadFile(testTable)
+	}
+	return testTable
+}
+
+// 测试枚举
 type TestEnum int32
 
 const (
-	TestEnum_TestEnumNone TestEnum = 0 // 默认值
-	TestEnum_TestEnumOne  TestEnum = 1 // 枚举值1
+	TestEnum_TEST_ENUM_A TestEnum = 0
+	TestEnum_TEST_ENUM_B TestEnum = 1
+	TestEnum_TEST_ENUM_C TestEnum = 2
 )

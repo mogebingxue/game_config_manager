@@ -111,10 +111,8 @@ func goFmtFile(filePath string) error {
 // 解析命令行参数
 func parseFlags() Config {
 	cfg := Config{}
-	flag.StringVar(&cfg.ProtoFile, "proto", "./gen_code_v2/conf/config.proto", "Path to proto file")
-	flag.StringVar(&cfg.Template, "tmpl", "./gen_code_v2/config.tmpl", "Path to template file")
-	// 默认输出路径改为空字符串，稍后根据proto文件名生成
-	flag.StringVar(&cfg.Output, "out", "", "Output file path (default: same as proto file with .go extension)")
+	flag.StringVar(&cfg.ProtoFile, "proto", "./config.proto", "Path to proto file")
+	flag.StringVar(&cfg.Template, "tmpl", "./config.tmpl", "Path to template file")
 	flag.Parse()
 
 	// 如果没有指定输出路径，则根据proto文件名生成
@@ -369,6 +367,17 @@ func toCamelCase(s string) string {
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
 }
+func firstLower(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToLower(s[:1]) + s[1:]
+}
+
+// 字符串小写转换
+func lower(s string) string {
+	return strings.ToLower(s)
+}
 
 // 渲染模板
 func renderTemplate(tplPath, outputPath string, data TemplateData) error {
@@ -414,6 +423,9 @@ func renderTemplate(tplPath, outputPath string, data TemplateData) error {
 				}
 				return "// " + strings.ReplaceAll(strings.TrimSpace(comment), "\n", "\n// ")
 			},
+			"hasSuffix":  strings.HasSuffix,
+			"firstLower": firstLower,
+			"lower":      lower,
 		}).
 		Parse(string(tplContent))
 	if err != nil {

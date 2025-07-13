@@ -2,72 +2,113 @@
 // Source: {{range .FileNames}}{{.}} {{end}}
 
 {{- if hasComments .FileComments}}
-{{- if .FileComments.LeadingDetachedComments}}
-{{formatDetachedComments .FileComments.LeadingDetachedComments}}
-{{- end}}
-{{- if .FileComments.LeadingComments}}
-{{formatLeadingComments .FileComments.LeadingComments}}
-{{- end}}
-{{- if .FileComments.TrailingComments}}
-{{formatTrailingComments .FileComments.TrailingComments}}
-{{- end}}
+	{{- if .FileComments.LeadingDetachedComments}}
+		{{formatDetachedComments .FileComments.LeadingDetachedComments}}
+	{{- end}}
+	{{- if .FileComments.LeadingComments}}
+		{{formatLeadingComments .FileComments.LeadingComments}}
+	{{- end}}
+	{{- if .FileComments.TrailingComments}}
+		{{formatTrailingComments .FileComments.TrailingComments}}
+	{{- end}}
 {{- end}}
 
 package {{.Package}}
 
+import "github.com/mogebingxue/game_config_manager"
+
+{{- $pkg := .Package }}
+
 {{range .Structs}}
-{{- if hasComments .Comments}}
-{{- if .Comments.LeadingDetachedComments}}
-{{formatDetachedComments .Comments.LeadingDetachedComments}}
-{{- end}}
-{{- if .Comments.LeadingComments}}
-{{formatLeadingComments .Comments.LeadingComments}}
-{{- end}}
-{{- end}}
-{{- if .Comments.TrailingComments}}
-{{formatTrailingComments .Comments.TrailingComments}}
-{{- end}}
-type {{.Name}} struct {
-{{- range .Fields}}
 	{{- if hasComments .Comments}}
-	{{- if .Comments.LeadingDetachedComments}}
-	{{formatDetachedComments .Comments.LeadingDetachedComments}}
+		{{- if .Comments.LeadingDetachedComments}}
+			{{formatDetachedComments .Comments.LeadingDetachedComments}}
+		{{- end}}
+		{{- if .Comments.LeadingComments}}
+			{{formatLeadingComments .Comments.LeadingComments}}
+		{{- end}}
 	{{- end}}
-	{{- if .Comments.LeadingComments}}
-	{{formatLeadingComments .Comments.LeadingComments}}
+	{{- if .Comments.TrailingComments}}
+		{{formatTrailingComments .Comments.TrailingComments}}
 	{{- end}}
+	type {{.Name}} struct {
+	{{- range .Fields}}
+		{{- if hasComments .Comments}}
+			{{- if .Comments.LeadingDetachedComments}}
+				{{formatDetachedComments .Comments.LeadingDetachedComments}}
+			{{- end}}
+			{{- if .Comments.LeadingComments}}
+				{{formatLeadingComments .Comments.LeadingComments}}
+			{{- end}}
+		{{- end}}
+		{{.FieldName}} {{.FieldType}} `yaml:"{{.YamlTag}}{{if .IsRepeated}},omitempty{{end}}{{if .IsMap}},inline{{end}}"`{{if .Comments.TrailingComments}} {{formatTrailingComments .Comments.TrailingComments}}{{end}}
 	{{- end}}
-	{{.FieldName}} {{.FieldType}} `yaml:"{{.YamlTag}}{{if .IsRepeated}},omitempty{{end}}{{if .IsMap}},inline{{end}}"`{{if .Comments.TrailingComments}} {{formatTrailingComments .Comments.TrailingComments}}{{end}}
-{{- end}}
-}
+	}
+
+	{{- if hasSuffix .Name "Table"}}
+		{{- $varName := firstLower .Name }}
+		{{- $structName := .Name }}
+		var {{$varName}} *{{$structName}}
+		var reload{{$structName}} *{{$structName}}
+
+		func (cfg *{{$structName}}) GetFileName() string {
+		    return "{{$pkg | lower}}/{{$structName}}.json"
+		}
+
+		func (cfg *{{$structName}}) GetResult() interface{} {
+		    return {{$varName}}
+		}
+
+		func (cfg *{{$structName}}) GetReloadResult(alloc bool) interface{} {
+		    if alloc || reload{{$structName}} == nil {
+		        reload{{$structName}} = new({{$structName}})
+		    }
+		    return reload{{$structName}}
+		}
+
+		func (cfg *{{$structName}}) OnReloadFinished() {
+		    {{$varName}} = reload{{$structName}}
+		}
+
+		func Get{{$structName}}() *{{$structName}} {
+		    if {{$varName}} == nil {
+		        {{$varName}} = &{{$structName}}{}
+		        config.GetConfigManager().LoadFile({{$varName}})
+		    }
+		    if config.GetConfigManager().IsDirty({{$varName}}.GetFileName()) {
+		        config.GetConfigManager().ReloadFile({{$varName}})
+		    }
+		    return {{$varName}}
+		}
+	{{- end}}
 {{end}}
 
 {{range .Enums}}
-{{- if hasComments .Comments}}
-{{- if .Comments.LeadingDetachedComments}}
-{{formatDetachedComments .Comments.LeadingDetachedComments}}
-{{- end}}
-{{- if .Comments.LeadingComments}}
-{{formatLeadingComments .Comments.LeadingComments}}
-{{- end}}
-{{- end}}
-{{- if .Comments.TrailingComments}}
-{{formatTrailingComments .Comments.TrailingComments}}
-{{- end}}
-type {{.Name}} int32
-
-const (
-{{- $enumName := .Name}}
-{{- range .Values}}
 	{{- if hasComments .Comments}}
-	{{- if .Comments.LeadingDetachedComments}}
-	{{formatDetachedComments .Comments.LeadingDetachedComments}}
+		{{- if .Comments.LeadingDetachedComments}}
+			{{formatDetachedComments .Comments.LeadingDetachedComments}}
+		{{- end}}
+		{{- if .Comments.LeadingComments}}
+			{{formatLeadingComments .Comments.LeadingComments}}
+		{{- end}}
 	{{- end}}
-	{{- if .Comments.LeadingComments}}
-	{{formatLeadingComments .Comments.LeadingComments}}
+	{{- if .Comments.TrailingComments}}
+		{{formatTrailingComments .Comments.TrailingComments}}
 	{{- end}}
+	type {{.Name}} int32
+
+	const (
+	{{- $enumName := .Name}}
+	{{- range .Values}}
+		{{- if hasComments .Comments}}
+			{{- if .Comments.LeadingDetachedComments}}
+				{{formatDetachedComments .Comments.LeadingDetachedComments}}
+			{{- end}}
+			{{- if .Comments.LeadingComments}}
+				{{formatLeadingComments .Comments.LeadingComments}}
+			{{- end}}
+		{{- end}}
+		{{$enumName}}_{{.Name}} {{$enumName}} = {{.Value}}{{if .Comments.TrailingComments}} {{formatTrailingComments .Comments.TrailingComments}}{{end}}
 	{{- end}}
-	{{$enumName}}_{{.Name}} {{$enumName}} = {{.Value}}{{if .Comments.TrailingComments}} {{formatTrailingComments .Comments.TrailingComments}}{{end}}
-{{- end}}
-)
+	)
 {{end}}
